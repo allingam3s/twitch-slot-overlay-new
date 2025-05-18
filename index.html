@@ -49,40 +49,48 @@
     <h2 class="title">🎮 Slot-Requests !sr</h2>
     <ul id="slot-queue"></ul>
   </div>
-
   <script>
-    // Ändern Sie diese URL zu Ihrer Backend-URL, nachdem Sie sie auf Render.com bereitgestellt haben
-    const API_URL = 'https://twitch-slot-backend.onrender.com';
+    const API_URL = 'https://twitch-slot-backend.onrender.com/slots.json';
+    const slotQueue = document.getElementById('slot-queue');
     
-    async function fetchSlotQueue() {
-      try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-
-        const container = document.getElementById("slot-queue");
-        container.innerHTML = "";
-
-        if (data.length === 0) {
-          container.innerHTML = "<li class='empty'>Die Liste ist aktuell leer</li>";
+    function updateSlotQueue() {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', API_URL);
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            slotQueue.innerHTML = '';
+            
+            if (data.length === 0) {
+              slotQueue.innerHTML = "<li class='empty'>Die Liste ist aktuell leer</li>";
+            } else {
+              data.forEach(function(item, index) {
+                const li = document.createElement('li');
+                li.textContent = (index + 1) + ". " + item.name + " – " + item.request;
+                slotQueue.appendChild(li);
+              });
+            }
+          } catch (e) {
+            console.error('JSON Parsing Error:', e);
+            slotQueue.innerHTML = "<li style='color: #ff6b6b;'>Fehler bei der Verarbeitung der Daten</li>";
+          }
         } else {
-          data.forEach(function(item, index) {
-            const listItem = document.createElement("li");
-            const number = index + 1;
-            const name = item.name || "";
-            const request = item.request || "";
-            listItem.innerText = number + ". " + name + " – " + request;
-            container.appendChild(listItem);
-          });
+          console.error('XHR Error:', xhr.status);
+          slotQueue.innerHTML = "<li style='color: #ff6b6b;'>Fehler beim Laden der Slot-Liste (Status: " + xhr.status + ")</li>";
         }
-      } catch (error) {
-        console.error("Fehler beim Laden der Slot-Liste:", error);
-        document.getElementById("slot-queue").innerHTML = 
-          "<li style='color: #ff6b6b;'>Fehler beim Laden der Slot-Liste</li>";
-      }
+      };
+      
+      xhr.onerror = function() {
+        console.error('Network Error');
+        slotQueue.innerHTML = "<li style='color: #ff6b6b;'>Netzwerkfehler beim Laden der Slot-Liste</li>";
+      };
+      
+      xhr.send();
     }
-
-    fetchSlotQueue();
-    setInterval(fetchSlotQueue, 10000);
+    
+    updateSlotQueue();
+    setInterval(updateSlotQueue, 10000);
   </script>
 </body>
 </html>
