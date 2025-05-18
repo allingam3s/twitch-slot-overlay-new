@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Twitch Slot Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+    }
+    
+    .container {
+      padding: 20px;
+    }
+    
+    .title {
+      font-size: 32px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    li {
+      margin-bottom: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      padding: 12px 16px;
+      border-left: 4px solid #9147ff;
+    }
+    
+    .empty {
+      font-style: italic;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="title">🎮 Slot-Requests !sr</h2>
+    <ul id="slot-queue"></ul>
+  </div>
+
+  <script>
+    // Ändern Sie diese URL zu Ihrer Backend-URL, nachdem Sie sie auf Render.com bereitgestellt haben
+    const API_URL = 'https://twitch-slot-backend.onrender.com';
+    
+    async function fetchSlotQueue() {
+      try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        const container = document.getElementById("slot-queue");
+        container.innerHTML = "";
+
+        if (data.length === 0) {
+          container.innerHTML = "<li class='empty'>Die Liste ist aktuell leer</li>";
+        } else {
+          data.forEach(function(item, index) {
+            const listItem = document.createElement("li");
+            const number = index + 1;
+            const name = item.name || "";
+            const request = item.request || "";
+            listItem.innerText = number + ". " + name + " – " + request;
+            container.appendChild(listItem);
+          });
+        }
+      } catch (error) {
+        console.error("Fehler beim Laden der Slot-Liste:", error);
+        document.getElementById("slot-queue").innerHTML = 
+          "<li style='color: #ff6b6b;'>Fehler beim Laden der Slot-Liste</li>";
+      }
+    }
+
+    fetchSlotQueue();
+    setInterval(fetchSlotQueue, 10000);
+  </script>
+</body>
+</html>
