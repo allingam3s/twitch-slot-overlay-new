@@ -42,16 +42,53 @@
       font-style: italic;
       opacity: 0.7;
     }
+    
+    .status {
+      margin-bottom: 15px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      border: 2px solid;
+      display: inline-block;
+    }
+    
+    .status-open {
+      background-color: rgba(0, 255, 136, 0.2);
+      border-color: #00ff88;
+      color: #00ff88;
+    }
+    
+    .status-closed {
+      background-color: rgba(255, 107, 107, 0.2);
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h2 class="title">🎮 Slot-Requests !sr</h2>
+    <div id="status" class="status status-open">Anfragen geöffnet</div>
     <ul id="slot-queue"></ul>
   </div>
   <script>
     const API_URL = 'https://twitch-slot-backend.onrender.com/slots.json';
+    const STATUS_URL = 'https://twitch-slot-backend.onrender.com/status.json';
     const slotQueue = document.getElementById('slot-queue');
+    const statusDiv = document.getElementById('status');
+    
+    function updateStatus(isOpen) {
+      statusDiv.className = 'status';
+      if (isOpen) {
+        statusDiv.classList.add('status-open');
+        statusDiv.textContent = 'Anfragen geöffnet';
+      } else {
+        statusDiv.classList.add('status-closed');
+        statusDiv.textContent = 'Anfragen geschlossen';
+      }
+    }
     
     function updateSlotQueue() {
       const xhr = new XMLHttpRequest();
@@ -62,10 +99,24 @@
             const data = JSON.parse(xhr.responseText);
             slotQueue.innerHTML = '';
             
-            if (data.length === 0) {
-              slotQueue.innerHTML = "<li class='empty'>Die Liste ist aktuell leer</li>";
+            // Check if it's the new format with status info
+            let slots = data;
+            let isOpen = true;
+            
+            if (data.slots && Array.isArray(data.slots)) {
+              slots = data.slots;
+              isOpen = data.isOpen !== undefined ? data.isOpen : true;
+            }
+            
+            updateStatus(isOpen);
+            
+            if (slots.length === 0) {
+              const emptyMessage = isOpen 
+                ? "Die Liste ist aktuell leer" 
+                : "Die Liste ist leer - Anfragen sind geschlossen";
+              slotQueue.innerHTML = "<li class='empty'>" + emptyMessage + "</li>";
             } else {
-              data.forEach(function(item, index) {
+              slots.forEach(function(item, index) {
                 const li = document.createElement('li');
                 li.textContent = (index + 1) + ". " + item.name + " – " + item.request;
                 slotQueue.appendChild(li);
